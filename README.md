@@ -1,11 +1,47 @@
-<div align="center">
+name: Build Android APK
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
-  <h1>Built with AI Studio</h2>
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
-</div>
+      - name: Install & Build
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm run build
+
+      - name: Init Capacitor & Android
+        run: |
+          npx cap init "CBSE Math 10" "com.cbsemath.class10quiz" --web-dir dist
+          npx cap add android
+
+      - name: Build Debug APK with Gradle
+        working-directory: ./android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CBSE-Math-Class10-Quiz-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
